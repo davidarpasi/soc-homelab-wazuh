@@ -1,0 +1,36 @@
+# General Linux temp & system files
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+*.lock
+*.pid
+*.gz
+*.tar
+*.zip
+*.iso
+*.vdi
+*.vmdk
+*.ova
+*.ovf
+
+# Editors & IDEs
+.vscode/
+.idea/
+*.code-workspace
+
+# MacOS / Windows junk
+.DS_Store
+Thumbs.db
+
+# Bash history
+.bash_history
+.bashrc~
+*.old
+*.backup
+
+# Python / Node (if ever used)
+node_modules/
+__pycache__/
+.env
