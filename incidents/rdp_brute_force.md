@@ -1,73 +1,21 @@
-# 🛡️ Incident Report – RDP Brute-Force Attempt
+# Failed-login investigation with Wazuh
 
-## 📌 Summary
-This incident report documents a simulated brute-force attack against a Windows 10 virtual machine using Remote Desktop Protocol (RDP). The Wazuh SIEM successfully detected multiple failed login attempts (Event ID 4625) through Windows Security logs, demonstrating effective log collection and threat detection.
+## Setup
 
----
+I used a Wazuh 4.12 all-in-one VM and a Windows 10 test VM. From my host machine, I made about 15 unsuccessful RDP login attempts over roughly two minutes, using different test usernames.
 
-## 🧱 Environment
+This was a local simulation. It was not an attack against a public server.
 
-- **SIEM**: Wazuh 4.12 All-in-One (OVA)
-- **Target**: Windows 10 VM (`win10target`)
-- **Attacker**: Host machine using `mstsc` RDP client
-- **Network**: Bridged adapter, internal IP: `192.168.1.145`
+## What I observed
 
----
+The Windows agent collected Security events through `eventchannel`. In Wazuh Discover, I found Event ID 4625 records around the test period, with NTLM authentication and logon type 3.
 
-## 🔍 Attack Scenario
+Those records show failed network authentication. The timing matched the RDP test, but event 4625 and logon type 3 alone do not prove an RDP brute-force attack. I did not create or validate a custom correlation rule, and no blocking response ran.
 
-- ~15 failed RDP login attempts executed within 2 minutes
-- Username variations used: `admin`, `hacker`, `guest`, `John321`, `Username`
-- Attack originated from host (simulating external brute-force)
-- Windows recorded Event ID `4625` in the Security log
+## What I learned
 
----
+The useful part was getting the Windows Security channel collected correctly and checking the event fields instead of relying only on an alert title. An agent query filter can hide the events you expect to see.
 
-## 📡 Detection
+To extend the exercise, I would add a documented correlation rule, replay both benign and repeated-failure examples, and check whether it distinguishes them. Account lockout and restricted RDP access would be separate controls to test.
 
-- Wazuh agent successfully collected Windows Security log via `eventchannel`
-- Log entry:  
-  - `event_id: 4625`  
-  - `logon_type: 3` (network login)  
-  - `failure_reason: %%2313` (wrong credentials)  
-  - `authenticationPackageName: NTLM`  
-- SIEM log visible in `wazuh-alerts-*` index (Kibana Discover)
-- Screenshot:  
-  ![RDP brute-force alert](../screenshots/rdp_alert.png)
-
----
-
-## ⚖️ CVSS (Informal)
-
-- **Attack Vector**: Network  
-- **Privileges Required**: None  
-- **User Interaction**: None  
-→ **CVSS 3.1 Base Score**: 8.0 (High)
-
----
-
-## 🛠️ Response
-
-- No blocking action triggered (lab-only setup)
-- Recommended:
-  - Enable account lockout policies
-  - Limit RDP exposure via firewall or VPN
-  - Enable logging for logon attempts and failures
-
----
-
-## 🧠 Lessons Learned
-
-- Wazuh agent requires proper config (no `<query>` filters blocking 4625)
-- Windows `Security` log must be explicitly collected
-- Even simple simulation shows the power of SIEM log correlation
-- This setup can be extended with alert rules and active responses
-
----
-
-## 🧰 Tools Used
-
-- `mstsc` (RDP client)
-- Wazuh SIEM
-- PowerShell (agent config + service mgmt)
-- Kibana Discover (log search)
+The original screenshot included local addresses and machine information, so I removed it from the current version. I have not recreated the lab for this cleanup.
